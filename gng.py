@@ -169,7 +169,15 @@ class GrowingNeuralGas:
         plt.savefig(file_path)
 
 if __name__ == '__main__':
-    data = datasets.make_blobs(n_samples=10000, random_state=8)
+    n_samples = 4000
+    dataset_type = 'circles'
+    data = None
+    if dataset_type == 'moons':
+        data = datasets.make_blobs(n_samples=n_samples, random_state=8)
+    elif dataset_type == 'blobs':
+        data = datasets.make_moons(n_samples=n_samples, noise=.05)
+    elif dataset_type == 'circles':
+        data = datasets.make_circles(n_samples=n_samples, factor=.5, noise=.05)
     data = StandardScaler().fit_transform(data[0])
     gng = GrowingNeuralGas(data)
     gng.train(e_b=0.3, e_n=0.006, a_max=10, l=25, a=0.5, d=0.995, iterations=1)
