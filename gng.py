@@ -1,8 +1,9 @@
 import numpy as np
 from scipy import spatial
-import csv
 import networkx as nx
 import matplotlib.pyplot as plt
+from sklearn import decomposition, datasets
+from sklearn.preprocessing import StandardScaler
 
 __authors__ = "Adrien Guille"
 __email__ = "adrien.guille@univ-lyon2.fr"
@@ -21,7 +22,7 @@ class GrowingNeuralGas:
         for unit in self.units:
             distance.append(spatial.distance.euclidean(unit, observation))
         ranking = np.argsort(distance).tolist()
-        return ranking[-2:]
+        return ranking
 
     def update_connections(self, s_1, s_2):
         # update edges emanating from s_1
@@ -67,23 +68,25 @@ class GrowingNeuralGas:
 
     def train(self, e_b, e_n, a_max, l, a, d, iterations=10):
         # start with two units a and b at random position w_a and w_b
-        w_a = np.random.uniform(0, 5, [len(self.data[0]), 1])
-        w_b = np.random.uniform(0, 5, [len(self.data[0]), 1])
-        self.units.append(w_a[0])
-        self.units.append(w_b[0])
+        w_a = [np.random.uniform(-2, 2) for _ in range(2)]
+        w_b = [np.random.uniform(-2, 2) for _ in range(2)]
+        self.units.append(w_a)
+        self.units.append(w_b)
+        print(self.units)
         self.error.append(0)
         self.error.append(0)
         self.connections.append([])
         self.connections.append([])
         # iterate through the data
-        for iter in range(iterations):
+        sequence = 0
+        for iteration in range(iterations):
             steps = 0
             np.random.shuffle(data)
             for observation in self.data:
                 # find the nearest unit s_1 and the second nearest unit s_2
                 nearest_units = self.find_nearest_units(observation)
-                s_1 = nearest_units[1]
-                s_2 = nearest_units[0]
+                s_1 = nearest_units[0]
+                s_2 = nearest_units[1]
                 # increment the age of all edges emanating from s_1
                 edges = self.connections[s_1]
                 updated_edges = []
@@ -108,6 +111,8 @@ class GrowingNeuralGas:
                 # if the number of steps so far is an integer multiple of parameter l, insert a new unit
                 steps += 1
                 if steps % l == 0:
+                    self.plot_network('visualization/' + str(sequence) + '.png')
+                    sequence += 1
                     # determine the unit q with the maximum accumulated error
                     q = np.argmax(self.error)
                     # insert a new unit r halfway between q and its neighbor f with the largest error variable
@@ -148,19 +153,24 @@ class GrowingNeuralGas:
         print(self.connections)
         print(self.error)
 
+    def plot_network(self, file_path):
+        plt.clf()
+        plt.scatter(self.data[:, 0], data[:, 1])
+        graph = nx.Graph()
+        node_pos = {}
+        for j in range(len(self.units)):
+            node_pos[j] = (self.units[j][0], self.units[j][1])
+        for idx in range(len(self.connections)):
+            for unit, age in gng.connections[idx]:
+                graph.add_edge(idx, unit)
+        nx.draw(graph, pos=node_pos)
+        plt.draw()
+        # plt.show()
+        plt.savefig(file_path)
+
 if __name__ == '__main__':
-    data = []
-    with open('iris.csv', 'r') as input_file:
-        csv_reader = csv.reader(input_file)
-        for row in csv_reader:
-            float_row = [float(row[0]), float(row[1]), float(row[2]), float(row[3])]
-            data.append(float_row)
+    data = datasets.make_blobs(n_samples=10000, random_state=8)
+    data = StandardScaler().fit_transform(data[0])
     gng = GrowingNeuralGas(data)
-    gng.train(e_b=0.2, e_n=0.006, a_max=20, l=10, a=0.3, d=0.995)
-    graph = nx.Graph()
-    for idx in range(len(gng.connections)):
-        for unit, age in gng.connections[idx]:
-            graph.add_edge(idx, unit)
-    nx.draw(graph, pos=nx.spring_layout(graph))
-    plt.draw()
-    plt.savefig('graph.png')
+    gng.train(e_b=0.3, e_n=0.006, a_max=10, l=25, a=0.5, d=0.995, iterations=1)
+
