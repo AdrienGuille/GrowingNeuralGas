@@ -39,11 +39,9 @@ class GrowingNeuralGas:
         for u, v, attributes in self.network.edges(data=True):
             if attributes['age'] > a_max:
                 self.network.remove_edge(u, v)
-                print('removed edge ', u, v)
         for u in self.network.nodes():
             if self.network.degree(u) == 0:
                 self.network.remove_node(u)
-                print('removed node ', u)
 
     def fit_network(self, e_b, e_n, a_max, l, a, d, iterations=100):
         # 0. start with two units a and b at random position w_a and w_b
@@ -115,7 +113,6 @@ class GrowingNeuralGas:
             # 9. decrease all error variables by multiplying them with a constant d
             for i in range(len(self.error)):
                 self.error[i] *= d
-        print(self.network)
 
     def plot_network(self, file_path):
         plt.clf()
@@ -135,6 +132,7 @@ if __name__ == '__main__':
     n_samples = 2000
     dataset_type = 'moons'
     data = None
+    print('Preparing data...')
     if dataset_type == 'blobs':
         data = datasets.make_blobs(n_samples=n_samples, random_state=8)
     elif dataset_type == 'moons':
@@ -142,6 +140,8 @@ if __name__ == '__main__':
     elif dataset_type == 'circles':
         data = datasets.make_circles(n_samples=n_samples, factor=.5, noise=.05)
     data = StandardScaler().fit_transform(data[0])
+    print('Done.')
+    print('Fitting neural network...')
     gng = GrowingNeuralGas(data)
     gng.fit_network(e_b=0.3, e_n=0.006, a_max=5, l=20, a=0.5, d=0.995, iterations=1000)
-
+    print('Found %d clusters:' % nx.number_connected_components(gng.network))
