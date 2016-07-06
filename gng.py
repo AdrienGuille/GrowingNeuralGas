@@ -60,7 +60,7 @@ class GrowingNeuralGas:
         # 1. iterate through the data
         sequence = 0
         steps = 0
-        np.random.shuffle(data)
+        # np.random.shuffle(data)
         for observation in self.data:
             if steps == iterations:
                 break
@@ -135,6 +135,26 @@ class GrowingNeuralGas:
         plt.draw()
         plt.savefig(file_path)
 
+    def plot_clusters(self):
+        number_of_clusters = nx.number_connected_components(self.network)
+        unit_to_cluster = np.zeros(len(self.units))
+        cluster = 0
+        for c in nx.connected_components(self.network):
+            for unit in c:
+                unit_to_cluster[unit] = cluster
+            cluster += 1
+        clustered_data = []
+        for observation in self.data:
+            nearest_units = self.find_nearest_units(observation)
+            s = nearest_units[0]
+            clustered_data.append((observation, unit_to_cluster[s]))
+        plt.clf()
+        color = ['r', 'b', 'g', 'k', 'm']
+        for i in range(number_of_clusters):
+            observations = np.array([observation for observation, s in clustered_data if s == i])
+            plt.scatter(observations[:, 0], observations[:, 1], color=color[i])
+        plt.savefig('visualization/clusters.png')
+
 
 if __name__ == '__main__':
     if os.path.exists('visualization/sequence'):
@@ -154,5 +174,6 @@ if __name__ == '__main__':
     print('Done.')
     print('Fitting neural network...')
     gng = GrowingNeuralGas(data)
-    gng.fit_network(e_b=0.3, e_n=0.006, a_max=5, l=20, a=0.5, d=0.995, iterations=1000)
-    print('Found %d clusters:' % nx.number_connected_components(gng.network))
+    gng.fit_network(e_b=0.3, e_n=0.006, a_max=8, l=20, a=0.5, d=0.995, iterations=1000)
+    print('Found %d clusters.' % nx.number_connected_components(gng.network))
+    gng.plot_clusters()
