@@ -44,6 +44,9 @@ class GrowingNeuralGas:
                 self.network.remove_node(u)
 
     def fit_network(self, e_b, e_n, a_max, l, a, d, iterations=100):
+        # logging variables
+        accumulated_global_error = []
+        network_order = []
         # 0. start with two units a and b at random position w_a and w_b
         w_a = [np.random.uniform(-2, 2) for _ in range(2)]
         w_b = [np.random.uniform(-2, 2) for _ in range(2)]
@@ -86,7 +89,7 @@ class GrowingNeuralGas:
             # 8. if the number of steps so far is an integer multiple of parameter l, insert a new unit
             steps += 1
             if steps % l == 0:
-                self.plot_network('visualization/' + str(sequence) + '.png')
+                self.plot_network('visualization/sequence/' + str(sequence) + '.png')
                 sequence += 1
                 # 8.a determine the unit q with the maximum accumulated error
                 q = np.argmax(self.error)
@@ -111,24 +114,32 @@ class GrowingNeuralGas:
                 self.error[f] *= a
                 self.error.append(self.error[q])
             # 9. decrease all error variables by multiplying them with a constant d
+            accumulated_global_error.append(np.sum(self.error))
+            network_order.append(self.network.size())
             for i in range(len(self.error)):
                 self.error[i] *= d
+        plt.clf()
+        plt.xlabel("iterations")
+        plt.plot(range(len(accumulated_global_error)), accumulated_global_error, label='global error')
+        plt.plot(range(len(network_order)), network_order, label='number of units')
+        plt.legend()
+        plt.savefig('visualization/global_error_and_network_size.png')
 
     def plot_network(self, file_path):
         plt.clf()
-        plt.scatter(self.data[:, 0], data[:, 1])
+        plt.scatter(self.data[:, 0], self.data[:, 1])
         node_pos = {}
         for j in range(len(self.units)):
             node_pos[j] = (self.units[j][0], self.units[j][1])
         nx.draw(self.network, pos=node_pos)
         plt.draw()
-        # plt.show()
         plt.savefig(file_path)
 
+
 if __name__ == '__main__':
-    if os.path.exists('visualization'):
-        shutil.rmtree('visualization')
-    os.makedirs('visualization')
+    if os.path.exists('visualization/sequence'):
+        shutil.rmtree('visualization/sequence')
+    os.makedirs('visualization/sequence')
     n_samples = 2000
     dataset_type = 'moons'
     data = None
