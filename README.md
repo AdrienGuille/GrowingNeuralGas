@@ -4,8 +4,10 @@
 
 A simple implementation of the Growing Neural Gas algorithm, based on:
 
-    A Growing Neural Gas Network Learns Topologies, B. Fritzke
-    Advances in Neural Information Processing Systems 7 (1995)
+``
+A Growing Neural Gas Network Learns Topologies, B. Fritzke
+Advances in Neural Information Processing Systems 7 (1995)`
+```
 
 ## Usage
 
@@ -26,7 +28,7 @@ from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
 
 print('Generating data...')
-data = datasets.make_moons(n_samples=n_samples, noise=.05) 
+data = datasets.make_moons(n_samples=2000, noise=.05) 
 data = StandardScaler().fit_transform(data[0])
 print('Done.')
 print('Fitting neural network...')
