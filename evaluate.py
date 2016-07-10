@@ -13,7 +13,7 @@ def evaluate_on_digits():
     data = digits.data
     target = digits.target
     gng = GrowingNeuralGas(data)
-    gng.fit_network(e_b=0.05, e_n=0.006, a_max=8, l=20, a=0.5, d=0.995, iterations=5, plot_evolution=False)
+    gng.fit_network(e_b=0.05, e_n=0.006, a_max=8, l=100, a=0.5, d=0.995, passes=5, plot_evolution=False)
     clustered_data = gng.cluster_data()
     print('Found %d clusters.' % nx.number_connected_components(gng.network))
     target_infered = []

@@ -45,10 +45,12 @@ class GrowingNeuralGas:
             if self.network.degree(u) == 0:
                 self.network.remove_node(u)
 
-    def fit_network(self, e_b, e_n, a_max, l, a, d, iterations=1, plot_evolution=False):
+    def fit_network(self, e_b, e_n, a_max, l, a, d, passes=1, plot_evolution=False):
         # logging variables
-        accumulated_global_error = []
+        accumulated_local_error = []
+        global_error = []
         network_order = []
+        network_size = []
         total_units = []
         self.units_created = 0
         # 0. start with two units a and b at random position w_a and w_b
@@ -61,7 +63,8 @@ class GrowingNeuralGas:
         self.units_created += 1
         # 1. iterate through the data
         sequence = 0
-        for iteration in range(iterations):
+        for p in range(passes):
+            print('   Pass #%d' % (p + 1))
             np.random.shuffle(self.data)
             steps = 0
             for observation in self.data:
@@ -125,24 +128,31 @@ class GrowingNeuralGas:
                 error = 0
                 for u in self.network.nodes_iter():
                     error += self.network.node[u]['error']
-                accumulated_global_error.append(error)
+                accumulated_local_error.append(error)
                 network_order.append(self.network.order())
+                network_size.append(self.network.size())
                 total_units.append(self.units_created)
                 for u in self.network.nodes_iter():
                     self.network.node[u]['error'] *= d
                     if self.network.degree(nbunch=[u]) == 0:
                         print(u)
-            print(self.compute_global_error())
+            global_error.append(self.compute_global_error())
+        plt.clf()
+        plt.title('Accumulated local error')
+        plt.xlabel('iterations')
+        plt.plot(range(len(accumulated_local_error)), accumulated_local_error)
+        plt.savefig('visualization/accumulated_local_error.png')
         plt.clf()
         plt.title('Global error')
-        plt.xlabel('iterations')
-        plt.plot(range(len(accumulated_global_error)), accumulated_global_error)
+        plt.xlabel('passes')
+        plt.plot(range(len(global_error)), global_error)
         plt.savefig('visualization/global_error.png')
         plt.clf()
-        plt.plot(range(len(network_order)), network_order, label='number of units')
-        plt.plot(range(len(total_units)), total_units, label='total number of units')
+        plt.title('Neural network properties')
+        plt.plot(range(len(network_order)), network_order, label='Network order')
+        plt.plot(range(len(network_size)), network_size, label='Network size')
         plt.legend()
-        plt.savefig('visualization/network_size.png')
+        plt.savefig('visualization/network_properties.png')
 
     def plot_network(self, file_path):
         plt.clf()
@@ -180,12 +190,14 @@ class GrowingNeuralGas:
     def plot_clusters(self, clustered_data):
         number_of_clusters = nx.number_connected_components(self.network)
         plt.clf()
+        plt.title('Cluster affectation')
         color = ['r', 'b', 'g', 'k', 'm', 'r', 'b', 'g', 'k', 'm']
         for i in range(number_of_clusters):
             observations = [observation for observation, s in clustered_data if s == i]
             if len(observations) > 0:
                 observations = np.array(observations)
-                plt.scatter(observations[:, 0], observations[:, 1], color=color[i])
+                plt.scatter(observations[:, 0], observations[:, 1], color=color[i], label='cluster #'+str(i))
+        plt.legend()
         plt.savefig('visualization/clusters.png')
 
     def compute_global_error(self):
@@ -215,6 +227,6 @@ if __name__ == '__main__':
     print('Done.')
     print('Fitting neural network...')
     gng = GrowingNeuralGas(data)
-    gng.fit_network(e_b=0.1, e_n=0.006, a_max=5, l=50, a=0.5, d=0.995, iterations=1, plot_evolution=True)
+    gng.fit_network(e_b=0.1, e_n=0.006, a_max=10, l=200, a=0.5, d=0.995, passes=8, plot_evolution=True)
     print('Found %d clusters.' % nx.number_connected_components(gng.network))
     gng.plot_clusters(gng.cluster_data())
