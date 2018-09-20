@@ -83,11 +83,18 @@ class GrowingNeuralGas:
                 self.network.node[s_1]['error'] += spatial.distance.euclidean(observation, self.network.node[s_1]['vector'])**2
                 # 5 .move s_1 and its direct topological neighbors towards the observation by the fractions
                 #    e_b and e_n, respectively, of the total distance
-                update_w_s_1 = e_b * (np.subtract(observation, self.network.node[s_1]['vector']))
-                self.network.node[s_1]['vector'] = np.add(self.network.node[s_1]['vector'], update_w_s_1)
-                update_w_s_n = e_n * (np.subtract(observation, self.network.node[s_1]['vector']))
+                update_w_s_1 = self.e_b * \
+                    (np.subtract(observation,
+                                 self.network.node[s_1]['vector']))
+                self.network.node[s_1]['vector'] = np.add(
+                    self.network.node[s_1]['vector'], update_w_s_1)
+
                 for neighbor in self.network.neighbors(s_1):
-                    self.network.node[neighbor]['vector'] = np.add(self.network.node[neighbor]['vector'], update_w_s_n)
+                    update_w_s_n = self.e_n * \
+                        (np.subtract(observation,
+                                     self.network.node[neighbor]['vector']))
+                    self.network.node[neighbor]['vector'] = np.add(
+                        self.network.node[neighbor]['vector'], update_w_s_n)
                 # 6. if s_1 and s_2 are connected by an edge, set the age of this edge to zero
                 #    if such an edge doesn't exist, create it
                 self.network.add_edge(s_1, s_2, age=0)
